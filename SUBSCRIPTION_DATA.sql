@@ -1,81 +1,79 @@
 SET SERVEROUTPUT ON;
+
 CREATE OR REPLACE PROCEDURE create_subscription_table AS
     table_exists EXCEPTION;
     PRAGMA EXCEPTION_INIT(table_exists, -00942);
-BEGIN
-    -- Check if the table already exists
-    DECLARE
-        table_count NUMBER;
-    BEGIN
-        SELECT COUNT(*)
-        INTO table_count
-        FROM USER_TABLES
-        WHERE TABLE_NAME = 'SUBSCRIPTION';
 
-        -- If the table exists, print a message and exit
-        IF table_count > 0 THEN
-            DBMS_OUTPUT.PUT_LINE('SUBSCRIPTION TABLE ALREADY EXISTS! SKIPPING.');
-            RETURN;
-        ELSE
-            -- Attempt to create the table
+    no_such_table EXCEPTION;
+    PRAGMA EXCEPTION_INIT(no_such_table, -00942);
+
+    no_instructor_table EXCEPTION;
+    no_student_table EXCEPTION;
+
+    -- Check if the table already exists
+    table_count NUMBER;
+BEGIN
+    SELECT COUNT(*)
+    INTO table_count
+    FROM USER_TABLES
+    WHERE TABLE_NAME = 'SUBSCRIPTION';
+
+    -- If the table exists, print a message and exit
+    IF table_count > 0 THEN
+        DBMS_OUTPUT.PUT_LINE('SUBSCRIPTION TABLE ALREADY EXISTS! SKIPPING.');
+        RETURN;
+    ELSE
+        -- Attempt to create the table
+        BEGIN
+            -- Check if the Instructor table exists
+            BEGIN
+                EXECUTE IMMEDIATE 'SELECT 1 FROM Admin.Instructor WHERE ROWNUM = 1';
+            EXCEPTION
+                WHEN no_such_table THEN
+                    RAISE no_instructor_table;
+            END;
+
+            -- Check if the Student table exists
+            BEGIN
+                EXECUTE IMMEDIATE 'SELECT 1 FROM Admin.Student WHERE ROWNUM = 1';
+            EXCEPTION
+                WHEN no_such_table THEN
+                    RAISE no_student_table;
+            END;
+
+            -- Attempt to create the Subscription table
             BEGIN
                 EXECUTE IMMEDIATE '
                     CREATE TABLE Subscription (
                         subscription_id VARCHAR2(40),
                         Student_neu_id NUMBER,
                         Instructor_id VARCHAR2(40),
-                        CONSTRAINT Subscription_PK PRIMARY KEY (subscription_id),
-                        CONSTRAINT Subscription_Student_FK FOREIGN KEY (Student_neu_id) REFERENCES Student(neu_id),
-                        CONSTRAINT Subscription_Instructor_FK FOREIGN KEY (Instructor_id) REFERENCES Instructor(Instructor_id)
+                        CONSTRAINT Subscription_PK PRIMARY KEY (subscription_id)
                     )
                 ';
                 DBMS_OUTPUT.PUT_LINE('SUBSCRIPTION TABLE CREATED SUCCESSFULLY.');
             EXCEPTION
+                WHEN no_instructor_table THEN
+                    DBMS_OUTPUT.PUT_LINE('Please create the Instructor table first.');
+                WHEN no_student_table THEN
+                    DBMS_OUTPUT.PUT_LINE('Please create the Student table first.');
                 WHEN OTHERS THEN
                     DBMS_OUTPUT.PUT_LINE('An error occurred: ' || SQLERRM);
             END;
-        END IF;
-    END;
+
+        EXCEPTION
+            WHEN OTHERS THEN
+                DBMS_OUTPUT.PUT_LINE('An error occurred while checking table existence: ' || SQLERRM);
+        END;
+    END IF;
 END create_subscription_table;
 /
-
 
 -- Call the procedure to create the Subscription table
 BEGIN
     create_subscription_table;
 END;
 /
-
-CREATE OR REPLACE PROCEDURE insert_subscription(
-    p_subscription_id    VARCHAR2,
-    p_student_neu_id     NUMBER,
-    p_instructor_id      VARCHAR2
-)
-IS
-    duplicate_entry EXCEPTION;
-    PRAGMA EXCEPTION_INIT(duplicate_entry, -00001);
-BEGIN
-    -- Attempt to insert values into the table
-    INSERT INTO Subscription (subscription_id, Student_neu_id, Instructor_id)
-    VALUES (p_subscription_id, p_student_neu_id, p_instructor_id);
-
-    -- Commit the transaction if the insertion is successful
-    COMMIT;
-    DBMS_OUTPUT.PUT_LINE('SUBSCRIPTION DATA INSERTED SUCCESSFULLY.');
-
-EXCEPTION
-    WHEN duplicate_entry THEN
-        -- Handle unique constraint violation
-        DBMS_OUTPUT.PUT_LINE('STUDENT IS ALREADY SUBSCRIBED TO AN INSTRUCTOR. SKIPPING.');
-        -- You can perform additional actions or log the error as needed
-        ROLLBACK; -- Rollback the transaction in case of a duplicate entry
-    WHEN OTHERS THEN
-        -- Handle other exceptions
-        DBMS_OUTPUT.PUT_LINE('An error occurred: ' || SQLERRM);
-        ROLLBACK; -- Rollback the transaction in case of any other exception
-END insert_subscription;
-/
-
 
 
 
@@ -92,3 +90,5 @@ END;
 /
 
 SELECT * FROM SUBSCRIPTION;
+
+SHOW ERRORS PROCEDURE ADMIN.CREATE_SUBSCRIPTION_TABLE;
