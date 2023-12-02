@@ -28,7 +28,8 @@ BEGIN
                     date_posted       DATE NOT NULL,
                     instructor_id     VARCHAR2(40),
                     facility_id       VARCHAR2(40),
-                    activity_status   VARCHAR2(40), -- New column added
+                    activity_status   VARCHAR2(40),
+                    slots             NUMBER NOT NULL, -- New column added
                     CONSTRAINT pk_activity PRIMARY KEY (activity_id),
                     CONSTRAINT fk_instructor FOREIGN KEY (instructor_id) REFERENCES Instructor(instructor_id),
                     CONSTRAINT fk_facility FOREIGN KEY (facility_id) REFERENCES Facility(facility_id)
@@ -42,6 +43,7 @@ BEGIN
     END IF;
 END create_activity_table;
 /
+
 
 
 -- Call the procedure to create the Activity table
@@ -83,6 +85,7 @@ BEGIN
     create_activity_sequence;
 END;
 /
+
 
 
 -- creating insert_activity stored procedure
@@ -133,6 +136,7 @@ BEGIN
         activity_id,
         activity_name,
         capacity,
+        slots, -- New column added
         start_time,
         end_time,
         scheduled_date,
@@ -145,6 +149,7 @@ BEGIN
         v_activity_id,
         p_activity_name,
         p_capacity,
+        p_capacity, -- Set slots same as capacity
         p_start_time,
         p_end_time,
         p_scheduled_date,
@@ -173,10 +178,12 @@ END insert_activity;
 
 
 
+
 -------------------------------------
 -- calling insert_activity procedure
 -------------------------------------
 
+-- Activity 1
 BEGIN
     insert_activity(
         'Yoga Class',
@@ -189,7 +196,10 @@ BEGIN
         '1', -- Facility: Marino Centre
         'Active'
     );
+END;
 
+-- Activity 2
+BEGIN
     insert_activity(
         'HIIT Workout',
         15,
@@ -201,7 +211,10 @@ BEGIN
         '2', -- Facility: Cabot Gym
         'Active'
     );
+END;
 
+-- Activity 3
+BEGIN
     insert_activity(
         'Dance Class',
         25,
@@ -213,7 +226,10 @@ BEGIN
         '4', -- Facility: Squashbusters
         'Active'
     );
+END;
 
+-- Activity 4
+BEGIN
     insert_activity(
         'Cycling Session',
         18,
@@ -225,7 +241,10 @@ BEGIN
         '3', -- Facility: Cabot Cage
         'Active'
     );
+END;
 
+-- Activity 5
+BEGIN
     insert_activity(
         'Body Sculpt Class',
         22,
@@ -237,7 +256,10 @@ BEGIN
         '5', -- Facility: Boston Common
         'Active'
     );
+END;
 
+-- Activity 6
+BEGIN
     insert_activity(
         'TRX and Cycling',
         15,
@@ -249,7 +271,10 @@ BEGIN
         '1', -- Facility: Marino Centre
         'Active'
     );
+END;
 
+-- Activity 7
+BEGIN
     insert_activity(
         'Yoga Session',
         20,
@@ -261,7 +286,10 @@ BEGIN
         '2', -- Facility: Cabot Gym
         'Active'
     );
+END;
 
+-- Activity 8
+BEGIN
     insert_activity(
         'HIIT Training',
         15,
@@ -273,7 +301,10 @@ BEGIN
         '3', -- Facility: Cabot Cage
         'Active'
     );
+END;
 
+-- Activity 9
+BEGIN
     insert_activity(
         'Dance Fitness',
         25,
@@ -285,7 +316,10 @@ BEGIN
         '4', -- Facility: Squashbusters
         'Active'
     );
+END;
 
+-- Activity 10
+BEGIN
     insert_activity(
         'Cycling Marathon',
         18,
@@ -297,7 +331,8 @@ BEGIN
         '5', -- Facility: Boston Common
         'Active'
     );
-
-    COMMIT;
 END;
 /
+
+
+
